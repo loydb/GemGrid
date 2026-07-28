@@ -8,7 +8,10 @@ but it makes no assumptions about its input. Sources may differ in frame count,
 per-frame delay and pixel dimensions; they get resampled onto a single fixed-rate
 output timeline.
 
-![grid of rotating gemstones](docs/example.png)
+![six gemstone turntables tiled into one animated grid](docs/example.webp)
+
+*Six turntable animations tiled into one 3×2 grid — 888×594, 72 frames, 1.35 MB.
+Built with GemGrid itself.*
 
 ## What it does
 

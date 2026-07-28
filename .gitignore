@@ -8,6 +8,8 @@ __pycache__/
 # outputs - grids can be tens of MB, never commit them
 *.webp
 *.gif
+# except the README demo, which is deliberately built small
+!docs/example.webp
 
 # editors / OS
 .vscode/
