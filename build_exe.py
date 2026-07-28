@@ -28,10 +28,14 @@ def main():
         if os.path.exists(spec):
             os.remove(spec)
 
+    # --onefile unpacks itself into %TEMP%\_MEIxxxx on every launch.  That is
+    # tidier to hand out, but it fails where policy makes %TEMP% non-executable
+    # and it pays the extraction cost at each start.  --onedir sidesteps both.
+    onedir = "--onedir" in sys.argv
     cmd = [
         sys.executable, "-m", "PyInstaller",
         "--noconfirm",
-        "--onefile",
+        "--onedir" if onedir else "--onefile",
         "--windowed",              # no console window behind the GUI
         "--name", NAME,
         "--distpath", os.path.join(HERE, "dist"),
@@ -57,8 +61,10 @@ def main():
     if r.returncode != 0:
         sys.exit("PyInstaller failed (%d)" % r.returncode)
 
-    exe = os.path.join(HERE, "dist", NAME + ".exe")
+    exe = os.path.join(HERE, "dist", NAME, NAME + ".exe") if onedir \
+        else os.path.join(HERE, "dist", NAME + ".exe")
     print("\nbuilt %s (%.1f MB)" % (exe, os.path.getsize(exe) / 1048576.))
+    print("self-test it with:  \"%s\" --selftest report.txt" % exe)
 
 
 if __name__ == "__main__":
