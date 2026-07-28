@@ -1,0 +1,16 @@
+# build artifacts
+build/
+dist/
+*.spec
+__pycache__/
+*.py[cod]
+
+# outputs - grids can be tens of MB, never commit them
+*.webp
+*.gif
+
+# editors / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
