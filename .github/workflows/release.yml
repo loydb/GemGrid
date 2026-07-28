@@ -130,9 +130,11 @@ jobs:
           # built line by line rather than with a here-string: PowerShell wants
           # the here-string terminator at column 0, which YAML block scalars
           # cannot express
-          $fence = [char]0x60 * 3
+          # cast to string before repeating: [char] * [int] is not an operator
+          $fence = ([string][char]0x60) * 3
           $run = "https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
           $block = @(
+            ""
             ""
             $marker
             ""
