@@ -84,10 +84,24 @@ jobs:
             dist/GemGrid.exe
             ${{ steps.package.outputs.zip }}
 
+      # Pushing a tag creates a tag, not a Release, so `gh release upload` has
+      # nothing to attach to on a first publish - it fails with "release not
+      # found".  Create it when absent, then upload either way, so the step
+      # works both for a fresh tag and for re-running against an existing
+      # release.
       - name: Attach to release
         if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "${{ github.ref_name }}" `
-            dist/GemGrid.exe "${{ steps.package.outputs.zip }}" --clobber
+          $tag = "${{ github.ref_name }}"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "creating release $tag"
+            gh release create $tag --title "GemGrid $tag" --notes-from-tag
+            if ($LASTEXITCODE -ne 0) { throw "could not create release $tag" }
+          } else {
+            Write-Host "release $tag already exists - updating assets"
+          }
+          gh release upload $tag dist/GemGrid.exe "${{ steps.package.outputs.zip }}" --clobber
+          if ($LASTEXITCODE -ne 0) { throw "asset upload failed" }
