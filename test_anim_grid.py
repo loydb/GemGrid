@@ -251,6 +251,34 @@ def main():
     check(r.returncode != 0 and "dimension limit" in (r.stdout + r.stderr),
           "oversize cell rejected against the 16383px WebP limit")
 
+    # ---- timing survives WebP's identical-frame coalescing -----------------
+    # Asking for more fps than a source has produces duplicate timeline frames.
+    # WebP merges those and sums their durations; the container total must
+    # still equal the timeline, or the animation silently runs short.
+    def anmf_total_ms(path):
+        import struct
+        b = open(path, "rb").read()
+        i, total, n = 12, 0, 0
+        while i + 8 <= len(b):
+            tag, size = b[i:i + 4], struct.unpack("<I", b[i + 4:i + 8])[0]
+            if tag == b"ANMF":
+                total += struct.unpack("<I", b[i + 20:i + 23] + b"\x00")[0]
+                n += 1
+            i += 8 + size + (size & 1)
+        return total, n
+
+    r = run([workdir, "fast.webp", "--cell", "48", "--fps", "60"])
+    fast = os.path.join(workdir, "fast.webp")
+    n_out = round(window / (1000.0 / 60))
+    delay = max(1, int(round(1000.0 / 60)))
+    total, stored = anmf_total_ms(fast)
+    check(r.returncode == 0, "60fps build exits 0")
+    check(total == n_out * delay,
+          "coalesced timing preserved (%d ms == %d x %d ms)"
+          % (total, n_out, delay))
+    check(stored <= n_out, "stored frames %d <= timeline frames %d"
+          % (stored, n_out))
+
     # sources must be untouched
     check(all(os.path.getsize(os.path.join(workdir, n)) > 0 for n in names),
           "sources intact")

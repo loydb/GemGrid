@@ -236,7 +236,48 @@ class App(ttk.Frame):
         self.master.destroy()
 
 
+def selftest(report_path):
+    """Headless smoke test, meant to be run against the frozen .exe.
+
+    A PyInstaller build can look fine and still be missing Pillow's WebP
+    encoder - a gap that would otherwise only surface after a user sat through
+    a whole build.  This proves the bundled binary can decode GIFs and write an
+    animated WebP.  Writes a report file because --windowed has no console.
+    """
+    import tempfile
+    import traceback
+    from PIL import Image
+
+    lines = []
+    ok = False
+    try:
+        d = tempfile.mkdtemp(prefix="gemgrid_selftest_")
+        for i in range(3):
+            fr = [Image.new("RGB", (64, 64), (40 * i + 10, 30 * j + 20, 128))
+                  for j in range(4)]
+            fr[0].save(os.path.join(d, "clip%d.gif" % i), save_all=True,
+                       append_images=fr[1:], duration=80, loop=0)
+        anim_grid.LOG = lambda m="": lines.append(str(m))
+        path = anim_grid.main([d, "selftest.webp", "--cell", "48"])
+        with Image.open(path) as im:
+            ok = bool(getattr(im, "is_animated", False)) and im.n_frames > 1
+            lines.append("frames=%d size=%s animated=%s"
+                         % (im.n_frames, im.size, im.is_animated))
+        lines.append("frozen=%s" % getattr(sys, "frozen", False))
+    except Exception:
+        lines.append(traceback.format_exc())
+    lines.append("RESULT: %s" % ("PASS" if ok else "FAIL"))
+    with open(report_path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines))
+    return 0 if ok else 1
+
+
 def main():
+    if "--selftest" in sys.argv:
+        i = sys.argv.index("--selftest")
+        report = sys.argv[i + 1] if len(sys.argv) > i + 1 else "gemgrid_selftest.txt"
+        sys.exit(selftest(report))
+
     root = tk.Tk()
     root.title(APP_TITLE)
     root.minsize(720, 520)

@@ -378,7 +378,13 @@ def main(argv=None):
     LOG("\nwrote %s" % out_path)
     LOG("  %dx%d px, %d frames, %d ms/frame, %.2f s, %.2f MB"
         % (gw, gh, n_out, delay_ms, n_out * delay_ms / 1000., mb))
-    LOG("  verified animated: %s, %d frames" % (anim, n_chk))
+    # WebP merges identical adjacent frames and sums their durations, so a
+    # stored count below the timeline count is an optimisation, not lost time.
+    # It shows up whenever --fps exceeds a source's own rate.
+    LOG("  verified animated: %s, %d stored frame(s)%s"
+        % (anim, n_chk, "" if n_chk == n_out else
+           " - %d identical adjacent frames coalesced, timing preserved"
+           % (n_out - n_chk)))
     if mb > a.max_mb:
         LOG("  NOTE: still over the %.0f MB budget at the %d px floor."
             % (a.max_mb, cell))

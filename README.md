@@ -128,9 +128,24 @@ the finished grid proves both that the clip landed in the right cell *and* that
 the correct frame was sampled at that instant. Expectations are computed from
 the delays used to author the sources, not re-read from them.
 
-28 checks, including 140 pixel-exact frame-identity samples, the delay
+31 checks, including 140 pixel-exact frame-identity samples, the delay
 fallbacks, short-clip looping, transparency compositing, the WebP dimension
 ceiling, and the budget solver against a deliberately brutal 0.30 MB target.
+
+One of them guards a subtlety worth knowing about: when `--fps` exceeds a
+source's own rate the timeline contains duplicate frames, and WebP merges
+identical adjacent frames into one with a summed duration. So the stored frame
+count can be lower than the timeline frame count — an optimisation, not lost
+time. The suite parses the container's raw `ANMF` chunks and asserts the total
+duration still equals the timeline exactly, because the failure mode would be
+an animation that silently runs short.
+
+The frozen `.exe` can also test itself, which catches a PyInstaller build that
+looks fine but is missing Pillow's WebP encoder:
+
+```bash
+GemGrid.exe --selftest report.txt
+```
 
 The suite is mutation-tested: swapping natural sort for lexical sort fails 120
 of 140 samples, so a green run means something.
