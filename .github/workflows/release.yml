@@ -72,9 +72,14 @@ jobs:
           "entries: $n"
 
       - name: Checksums
+        id: sums
         run: |
-          Get-FileHash dist/GemGrid.exe -Algorithm SHA256 | Format-List
-          Get-FileHash "${{ steps.package.outputs.zip }}" -Algorithm SHA256 | Format-List
+          $a = (Get-FileHash dist/GemGrid.exe -Algorithm SHA256).Hash.ToLower()
+          $b = (Get-FileHash "${{ steps.package.outputs.zip }}" -Algorithm SHA256).Hash.ToLower()
+          "exe=$a" >> $env:GITHUB_OUTPUT
+          "zip=$b" >> $env:GITHUB_OUTPUT
+          "sha256  $a  GemGrid.exe"
+          "sha256  $b  $(Split-Path '${{ steps.package.outputs.zip }}' -Leaf)"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -105,3 +110,40 @@ jobs:
           }
           gh release upload $tag dist/GemGrid.exe "${{ steps.package.outputs.zip }}" --clobber
           if ($LASTEXITCODE -ne 0) { throw "asset upload failed" }
+
+      # Hashes are computed from the artifacts that were actually uploaded, so
+      # published checksums always describe the published files.  Hand-written
+      # ones only ever described whatever was built locally at the time.
+      # The existing block is stripped first, so re-running is idempotent.
+      - name: Publish checksums into the release notes
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $zipName = Split-Path "${{ steps.package.outputs.zip }}" -Leaf
+          $body = gh release view $tag --json body --jq .body
+          if ($LASTEXITCODE -ne 0) { throw "could not read release notes" }
+          $marker = "## Checksums"
+          $i = $body.IndexOf($marker)
+          if ($i -ge 0) { $body = $body.Substring(0, $i).TrimEnd() }
+          # built line by line rather than with a here-string: PowerShell wants
+          # the here-string terminator at column 0, which YAML block scalars
+          # cannot express
+          $fence = [char]0x60 * 3
+          $run = "https://github.com/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+          $block = @(
+            ""
+            $marker
+            ""
+            $fence
+            "sha256  ${{ steps.sums.outputs.exe }}  GemGrid.exe"
+            "sha256  ${{ steps.sums.outputs.zip }}  $zipName"
+            $fence
+            ""
+            "Built and published by [this workflow run]($run)."
+          ) -join "`n"
+          Set-Content -Path notes.md -Value ($body + $block) -Encoding utf8
+          gh release edit $tag --notes-file notes.md
+          if ($LASTEXITCODE -ne 0) { throw "could not update release notes" }
+          Get-Content notes.md | Select-Object -Last 10
