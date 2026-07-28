@@ -16,3 +16,7 @@ __pycache__/
 .idea/
 Thumbs.db
 desktop.ini
+
+# local-only utility, deliberately not part of the published project
+webp_to_gif.py
+test_webp_to_gif.py

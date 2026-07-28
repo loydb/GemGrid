@@ -113,23 +113,6 @@ python anim_grid.py "D:\gems" grid.webp --cols 5 --rows 6 --cell 360
 python anim_grid.py "D:\gems" grid.webp --lossless
 ```
 
-### Converting to GIF
-
-Some places still only take GIF — Facebook, older forums, email clients.
-
-```bash
-python webp_to_gif.py docs/example.webp
-python webp_to_gif.py docs/example.webp --max-mb 8
-```
-
-Expect it to get much bigger: GIF is capped at 256 colours per frame and has no
-inter-frame prediction worth the name, so a 1.35 MB WebP becomes about 10 MB.
-`--max-mb` bisects the width down to a budget. Each frame keeps its own delay
-rather than being flattened to one rate, and durations are read from the WebP
-container's `ANMF` chunks — Pillow reports `duration` as `None` on WebPs whose
-identical adjacent frames were coalesced, which would silently produce a GIF
-with the wrong timing.
-
 ### Options
 
 | Option | Default | What it does |
