@@ -30,5 +30,11 @@ jobs:
       # The suite builds its own synthetic corpus, so there is nothing to fetch
       # and no fixture to keep in sync - it exercises the mismatched frame
       # counts, delays and dimensions that a real uniform export never does.
-      - name: Run tests
+      - name: Run engine tests
         run: python test_anim_grid.py
+
+      # Drives the real widgets with a hand-pumped event loop.  Skips itself
+      # where Tk has no display, so headless Linux runners stay green without
+      # needing xvfb.
+      - name: Run GUI tests
+        run: python test_gui.py

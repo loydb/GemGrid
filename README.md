@@ -125,7 +125,8 @@ precedes `gem10`.
 ## Tests
 
 ```bash
-python test_anim_grid.py
+python test_anim_grid.py    # engine: 31 checks
+python test_gui.py          # GUI: 24 checks
 ```
 
 A real GemCutStudio folder is uniform — same dimensions, same frame rate — so it
@@ -162,6 +163,14 @@ GemGrid.exe --selftest report.txt
 
 The suite is mutation-tested: swapping natural sort for lexical sort fails 120
 of 140 samples, so a green run means something.
+
+`test_gui.py` covers what only the GUI owns — the worker thread, the queue that
+carries engine output back into the log pane, the button state machine,
+overwrite prompting and cancellation. It drives the real widgets and pumps Tk's
+event loop by hand rather than calling `mainloop()`, so it runs unattended, and
+it skips cleanly where Tk has no display. Also mutation-tested: dropping the
+line that regenerates the output name after a successful build fails exactly
+the check that guards it.
 
 ## Build the exe
 
