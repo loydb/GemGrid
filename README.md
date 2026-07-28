@@ -1,6 +1,14 @@
 # GemGrid
 
+[![tests](https://github.com/loydb/GemGrid/actions/workflows/tests.yml/badge.svg)](https://github.com/loydb/GemGrid/actions/workflows/tests.yml)
+[![latest release](https://img.shields.io/github/v/release/loydb/GemGrid)](https://github.com/loydb/GemGrid/releases/latest)
+
 Tile a folder of animated GIFs into a single animated WebP contact sheet.
+
+**[⬇ Download GemGrid.exe](https://github.com/loydb/GemGrid/releases/latest/download/GemGrid.exe)** —
+Windows, nothing to install. Or grab the
+[folder build](https://github.com/loydb/GemGrid/releases/latest) if `%TEMP%` is
+locked down on your machine.
 
 Built for [GemCutStudio](https://www.gemcutstudio.com/) turntable animations — a
 folder of rotating faceted gemstones becomes one grid you can view at a glance —
@@ -55,10 +63,10 @@ source rate is reproducible instead of being rounded.
 
 ## Install
 
-**`GemGrid.exe` needs nothing installed.** No Python, no Pillow, no Visual C++
-redistributable. The interpreter, Tcl/Tk, Pillow's compiled imaging and WebP
-codecs, and the Universal CRT are all inside the executable. Download it and
-run it.
+**[`GemGrid.exe`](https://github.com/loydb/GemGrid/releases/latest/download/GemGrid.exe)
+needs nothing installed.** No Python, no Pillow, no Visual C++ redistributable.
+The interpreter, Tcl/Tk, Pillow's compiled imaging and WebP codecs, and the
+Universal CRT are all inside the executable. Download it and run it.
 
 Verified rather than assumed — with Python stripped from `PATH` and
 `PYTHONHOME` / `PYTHONPATH` cleared, the running process loads
