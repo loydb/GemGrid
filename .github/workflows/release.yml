@@ -1,0 +1,93 @@
+name: release
+
+# Builds both distribution shapes on a version tag and attaches them to the
+# release, so cutting a release stops depending on one particular laptop having
+# PyInstaller installed.  workflow_dispatch runs everything except the upload,
+# which makes the build verifiable without minting a throwaway tag.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      # Never ship a binary that has not passed its own suite.
+      - name: Run tests
+        run: |
+          python test_anim_grid.py
+          python test_gui.py
+
+      - name: Build single-file exe
+        run: python build_exe.py
+
+      # A --windowed exe detaches from the console, so the exit code has to be
+      # collected via Start-Process -Wait rather than by running it directly.
+      # The self-test proves the frozen bundle can decode GIFs and encode an
+      # animated WebP - a PyInstaller build can look healthy and still be
+      # missing Pillow's WebP codec.
+      - name: Self-test single-file exe
+        run: |
+          $p = Start-Process .\dist\GemGrid.exe -ArgumentList "--selftest","onefile.txt" -PassThru -Wait
+          Get-Content onefile.txt
+          if ($p.ExitCode -ne 0) { throw "onefile self-test failed ($($p.ExitCode))" }
+
+      - name: Build onedir bundle
+        run: python build_exe.py --onedir
+
+      - name: Self-test onedir bundle
+        run: |
+          $p = Start-Process .\dist\GemGrid\GemGrid.exe -ArgumentList "--selftest","onedir.txt" -PassThru -Wait
+          Get-Content onedir.txt
+          if ($p.ExitCode -ne 0) { throw "onedir self-test failed ($($p.ExitCode))" }
+
+      - name: Package onedir bundle
+        id: package
+        run: |
+          $v = "${{ github.ref_name }}" -replace '^v',''
+          if (-not $v -or "${{ github.ref_type }}" -ne "tag") { $v = "dev" }
+          $zip = "dist/GemGrid-$v-windows-onedir.zip"
+          Compress-Archive -Path dist/GemGrid -DestinationPath $zip -CompressionLevel Optimal
+          # guard against the empty-archive failure mode seen when a source
+          # tree is partially locked during compression
+          $n = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $zip)).Entries.Count
+          if ($n -lt 100) { throw "archive has only $n entries - build tree incomplete" }
+          "zip=$zip" >> $env:GITHUB_OUTPUT
+          "entries: $n"
+
+      - name: Checksums
+        run: |
+          Get-FileHash dist/GemGrid.exe -Algorithm SHA256 | Format-List
+          Get-FileHash "${{ steps.package.outputs.zip }}" -Algorithm SHA256 | Format-List
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: GemGrid-${{ github.ref_name }}
+          path: |
+            dist/GemGrid.exe
+            ${{ steps.package.outputs.zip }}
+
+      - name: Attach to release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ github.ref_name }}" `
+            dist/GemGrid.exe "${{ steps.package.outputs.zip }}" --clobber
