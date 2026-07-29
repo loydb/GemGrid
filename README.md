@@ -10,7 +10,7 @@ Windows, nothing to install. Or grab the
 [folder build](https://github.com/loydb/GemGrid/releases/latest) if `%TEMP%` is
 locked down on your machine.
 
-Built for [GemCutStudio](https://www.gemcutstudio.com/) turntable animations — a
+Built for [Gem Cut Studio](https://gemcutstudio.com/) turntable animations — a
 folder of rotating faceted gemstones becomes one grid you can view at a glance —
 but it makes no assumptions about its input. Sources may differ in frame count,
 per-frame delay and pixel dimensions; they get resampled onto a single fixed-rate
@@ -20,6 +20,25 @@ output timeline.
 
 *Six turntable animations tiled into one 3×2 grid — 888×594, 72 frames, 1.35 MB.
 Built with GemGrid itself.*
+
+## About Gem Cut Studio
+
+[**Gem Cut Studio**](https://gemcutstudio.com/), by **Rej Poirier**, is design
+software for faceted gemstones — *"gem design, in real-time"*, in its own
+words. You work in the terms a faceter actually cuts to, and see the finished
+stone rendered as you go, so a design can be judged on screen before anything
+is ground against a lap. Among what it exports are turntable animations of a
+finished stone, and those are what GemGrid was built to collect.
+
+Those turntables are the reason a tool like this is useful. A single rotating
+stone tells you how one design behaves; thirty of them side by side, turning
+together, is how you compare a set — spotting which cuts hold brilliance
+through the rotation and which go flat. That comparison is hard to make by
+opening files one at a time, and it is the whole point of the grid.
+
+GemGrid is an independent tool. It is not affiliated with Gem Cut Studio, and
+it reads that program's exported animations the same way it reads any other
+animated GIF.
 
 ## What it does
 
@@ -142,7 +161,7 @@ python test_anim_grid.py    # engine: 31 checks
 python test_gui.py          # GUI: 24 checks
 ```
 
-A real GemCutStudio folder is uniform — same dimensions, same frame rate — so it
+A real Gem Cut Studio folder is uniform — same dimensions, same frame rate — so it
 never exercises the mismatch handling. The suite builds a synthetic corpus that
 deliberately violates every assumption: eight clips at 240×120, 100×300, 128²,
 160² and 200², frame counts from 1 to 25, delays uniform / per-frame-varied /
