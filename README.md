@@ -70,7 +70,7 @@ resolution. On a real 30-clip set at the same ~38 MB:
 |---|---|---|
 | Cell size | 200 px | **432 px** |
 | Output | 1242×1036 | **2634×2196** |
-| Pixels | 1.0× | **4.7×** |
+| Output pixels | 1.0× | **4.5×** |
 
 WebP is also full colour — no 256-entry palette, no dithering — and stores frame
 delays in exact milliseconds rather than GIF's 10 ms centiseconds, so a 30 ms
