@@ -111,10 +111,18 @@ def run(args):
 
 
 def main():
-    workdir = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
+    base = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
         tempfile.gettempdir(), "gif_grid_test")
+    # Never rmtree an arbitrary caller-supplied directory: operate only inside a
+    # dedicated subdirectory the test owns, so a stray argv[1] pointing at a real
+    # directory can't be silently wiped.
+    if os.path.exists(base) and not os.path.isdir(base):
+        sys.exit("workdir is not a directory: %s" % base)
+    workdir = os.path.join(base, "gemgrid_test_corpus")
     if os.path.isdir(workdir):
         shutil.rmtree(workdir)
+    elif os.path.exists(workdir):
+        sys.exit("refusing to overwrite non-directory: %s" % workdir)
     os.makedirs(workdir)
     build_corpus(workdir)
 

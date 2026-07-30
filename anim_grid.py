@@ -60,6 +60,7 @@ SIZE_MARGIN     = 0.95    # aim slightly under budget; encoders vary
 PROBE_FRAMES    = 12      # sampled frames used to estimate bytes/frame
 CELL_STEP       = 8       # auto-solved cell sizes snap to this multiple
 WEBP_MAX_DIM    = 16383   # hard format limit on either axis
+MAX_TOTAL_FRAMES = 1_000_000  # absolute sanity cap; a crafted GIF can claim more
 
 # --- embedding hooks (the GUI replaces these) --------------------------------
 LOG = print
@@ -258,6 +259,14 @@ def main(argv=None):
     for f in files:
         with Image.open(os.path.join(src_dir, f)) as im:
             total_frames += getattr(im, "n_frames", 1)
+
+    # A crafted GIF can advertise millions of frames; the cache-cell clamp below
+    # floors at --min-cell, so past a point no cell size can bring the decoded
+    # cache under --mem-gb.  Abort before pass 2 allocates rather than after.
+    est_at_floor = total_frames * a.min_cell * a.min_cell * 3 / (1024. ** 3)
+    if total_frames > MAX_TOTAL_FRAMES or est_at_floor > a.mem_gb:
+        sys.exit("too many frames (%d) to fit in %.1f GB; raise --mem-gb or "
+                 "reduce inputs" % (total_frames, a.mem_gb))
 
     cache_cell = min(a.cell or a.max_cell, hard_cap)
     est_gb = total_frames * cache_cell * cache_cell * 3 / (1024. ** 3)
