@@ -17,16 +17,16 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: "3.11"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller
+          pip install -r requirements.txt Pillow==12.3.0 pyinstaller==6.16.0
 
       # Never ship a binary that has not passed its own suite.
       - name: Run tests
@@ -59,9 +59,12 @@ jobs:
 
       - name: Package onedir bundle
         id: package
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
         run: |
-          $v = "${{ github.ref_name }}" -replace '^v',''
-          if (-not $v -or "${{ github.ref_type }}" -ne "tag") { $v = "dev" }
+          $v = "$env:REF_NAME" -replace '^v',''
+          if (-not $v -or "$env:REF_TYPE" -ne "tag") { $v = "dev" }
           $zip = "dist/GemGrid-$v-windows-onedir.zip"
           Compress-Archive -Path dist/GemGrid -DestinationPath $zip -CompressionLevel Optimal
           # guard against the empty-archive failure mode seen when a source
@@ -73,16 +76,18 @@ jobs:
 
       - name: Checksums
         id: sums
+        env:
+          ZIP_PATH: ${{ steps.package.outputs.zip }}
         run: |
           $a = (Get-FileHash dist/GemGrid.exe -Algorithm SHA256).Hash.ToLower()
-          $b = (Get-FileHash "${{ steps.package.outputs.zip }}" -Algorithm SHA256).Hash.ToLower()
+          $b = (Get-FileHash "$env:ZIP_PATH" -Algorithm SHA256).Hash.ToLower()
           "exe=$a" >> $env:GITHUB_OUTPUT
           "zip=$b" >> $env:GITHUB_OUTPUT
           "sha256  $a  GemGrid.exe"
-          "sha256  $b  $(Split-Path '${{ steps.package.outputs.zip }}' -Leaf)"
+          "sha256  $b  $(Split-Path "$env:ZIP_PATH" -Leaf)"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: GemGrid-${{ github.ref_name }}
           path: |
@@ -98,8 +103,10 @@ jobs:
         if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
+          REF_NAME: ${{ github.ref_name }}
+          ZIP_PATH: ${{ steps.package.outputs.zip }}
         run: |
-          $tag = "${{ github.ref_name }}"
+          $tag = "$env:REF_NAME"
           gh release view $tag *> $null
           if ($LASTEXITCODE -ne 0) {
             Write-Host "creating release $tag"
@@ -108,7 +115,7 @@ jobs:
           } else {
             Write-Host "release $tag already exists - updating assets"
           }
-          gh release upload $tag dist/GemGrid.exe "${{ steps.package.outputs.zip }}" --clobber
+          gh release upload $tag dist/GemGrid.exe "$env:ZIP_PATH" --clobber
           if ($LASTEXITCODE -ne 0) { throw "asset upload failed" }
 
       # Hashes are computed from the artifacts that were actually uploaded, so
@@ -119,9 +126,13 @@ jobs:
         if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
+          REF_NAME: ${{ github.ref_name }}
+          ZIP_PATH: ${{ steps.package.outputs.zip }}
+          SUMS_EXE: ${{ steps.sums.outputs.exe }}
+          SUMS_ZIP: ${{ steps.sums.outputs.zip }}
         run: |
-          $tag = "${{ github.ref_name }}"
-          $zipName = Split-Path "${{ steps.package.outputs.zip }}" -Leaf
+          $tag = "$env:REF_NAME"
+          $zipName = Split-Path "$env:ZIP_PATH" -Leaf
           $body = gh release view $tag --json body --jq .body
           if ($LASTEXITCODE -ne 0) { throw "could not read release notes" }
           $marker = "## Checksums"
@@ -139,8 +150,8 @@ jobs:
             $marker
             ""
             $fence
-            "sha256  ${{ steps.sums.outputs.exe }}  GemGrid.exe"
-            "sha256  ${{ steps.sums.outputs.zip }}  $zipName"
+            "sha256  $env:SUMS_EXE  GemGrid.exe"
+            "sha256  $env:SUMS_ZIP  $zipName"
             $fence
             ""
             "Built and published by [this workflow run]($run)."
