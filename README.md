@@ -99,7 +99,9 @@ To run from source instead:
 pip install -r requirements.txt
 ```
 
-Pillow is the only dependency. Verified on Python 3.11 and 3.12.
+Pillow is the only dependency, pinned to 12.3.0, which needs Python 3.10 or
+newer. CI runs both suites on Python 3.10, 3.11 and 3.13 across Windows and
+Ubuntu.
 
 ## Use it
 

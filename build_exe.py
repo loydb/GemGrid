@@ -3,8 +3,12 @@ build_exe.py - freeze the GemGrid GUI into a single-file Windows .exe.
 
     python build_exe.py            # build
     python build_exe.py --clean    # build after wiping build/ and dist/
+    python build_exe.py --onedir   # folder build instead of a single file
 
-Produces dist/GemGrid.exe.  Needs PyInstaller:  pip install pyinstaller
+Produces dist/GemGrid.exe, or dist/GemGrid/GemGrid.exe with --onedir.  The icon
+comes from gemgrid.ico when present, which gen_icon.py regenerates.
+
+Needs PyInstaller:  pip install pyinstaller
 """
 
 import os

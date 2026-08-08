@@ -1,7 +1,7 @@
 """
 test_anim_grid.py - end-to-end checks for anim_grid.py.
 
-The real GemCutStudio corpus is uniform (all 720x720, all 30ms), so it never
+The real Gem Cut Studio corpus is uniform (all 720x720, all 30ms), so it never
 exercises the paths anim_grid.py claims to handle.  This builds a deliberately
 hostile synthetic corpus and verifies the output pixel by pixel.
 
@@ -26,7 +26,7 @@ from PIL import Image, ImageSequence
 HERE = os.path.dirname(os.path.abspath(__file__))
 TARGET = os.path.join(HERE, "anim_grid.py")
 
-FALLBACK_MS = 100  # what gif_grid.py must substitute for a 0/missing delay
+FALLBACK_MS = 100  # what anim_grid.py must substitute for a 0/missing delay
 
 # name, (w, h), n_frames, delays -> int, list, or None for "write no duration"
 CORPUS = [
@@ -112,7 +112,7 @@ def run(args):
 
 def main():
     base = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
-        tempfile.gettempdir(), "gif_grid_test")
+        tempfile.gettempdir(), "anim_grid_test")
     # Never rmtree an arbitrary caller-supplied directory: operate only inside a
     # dedicated subdirectory the test owns, so a stray argv[1] pointing at a real
     # directory can't be silently wiped.
